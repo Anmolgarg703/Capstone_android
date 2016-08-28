@@ -6,10 +6,12 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.ParcelUuid;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -38,76 +40,6 @@ public class MainActivity extends AppCompatActivity{
     private Set<BluetoothDevice> pairedDevices;
     ListView lv;
     BluetoothSocket mSocket = null;
-    /*ThreadBeConnected myThreadBeConnected;
-
-
-    private class ThreadBeConnected extends Thread {
-
-        private BluetoothServerSocket bluetoothServerSocket = null;
-
-        public ThreadBeConnected(UUID myUUID) {
-            try {
-                bluetoothServerSocket =
-                        BA.listenUsingRfcommWithServiceRecord("Server", myUUID);
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void run() {
-            BluetoothSocket bluetoothSocket = null;
-
-            if(bluetoothServerSocket!=null){
-                try {
-                    bluetoothSocket = bluetoothServerSocket.accept();
-
-                    BluetoothDevice remoteDevice = bluetoothSocket.getRemoteDevice();
-
-                    //connected
-                    runOnUiThread(new Runnable(){
-
-                        @Override
-                        public void run() {
-                            //textStatus.setText(strConnected);
-                        }});
-
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-
-                    final String eMessage = e.getMessage();
-                    runOnUiThread(new Runnable(){
-
-                        @Override
-                        public void run() {
-                            //textStatus.setText("something wrong: \n" + eMessage);
-                        }});
-                }
-            }else{
-                runOnUiThread(new Runnable(){
-
-                    @Override
-                    public void run() {
-                       // textStatus.setText("bluetoothServerSocket == null");
-                    }});
-            }
-        }
-        public void cancel() {
-
-            Toast.makeText(getApplicationContext(),
-                    "close bluetoothServerSocket",
-                    Toast.LENGTH_LONG).show();
-
-            try {
-                bluetoothServerSocket.close();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-    }*/
 
 
     @Override
@@ -146,6 +78,11 @@ public class MainActivity extends AppCompatActivity{
         startActivityForResult(getVisible, 0);
     }
 
+    public void settings(View v){
+        Intent settingsIntent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+        startActivity(settingsIntent);
+    }
+
     public void discover(View v){
         if(BA.isEnabled()) {
             Toast.makeText(getApplicationContext(), "Inside Discover", Toast.LENGTH_SHORT).show();
@@ -171,7 +108,7 @@ public class MainActivity extends AppCompatActivity{
             else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
                 Toast.makeText(getApplicationContext(),"Discovery finished" ,Toast.LENGTH_SHORT).show();
             }
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+            if(BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 AbstractList mArray = new ArrayList();
                 mArray.add(device.getName());
@@ -202,17 +139,30 @@ public class MainActivity extends AppCompatActivity{
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
-            public final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");;
+            //public final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");;
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 BluetoothDevice device = (BluetoothDevice) lv.getItemAtPosition(position);
                 Toast.makeText(getApplicationContext(), device.getName(), Toast.LENGTH_SHORT).show();
 
+                ParcelUuid[] uuids = device.getUuids();
+                BluetoothSocket socket = null;
+                try {
+                    socket = device.createRfcommSocketToServiceRecord(uuids[0].getUuid());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    socket.connect();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                /* myThreadBeConnected = new ThreadBeConnected(UUID.fromString("ec79da00-853f-11e4-b4a9-0800200c9a66"));
                 myThreadBeConnected.start();*/
                 
-                try{
+               /* try{
                     mSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
                     Toast.makeText(getApplicationContext(), "Creating Socket", Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
@@ -225,7 +175,7 @@ public class MainActivity extends AppCompatActivity{
                 } catch (IOException e) {
                     Toast.makeText(getApplicationContext(), "Connection exception", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
-                }
+                }*/
             }
         });
     }
